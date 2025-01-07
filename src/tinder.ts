@@ -58,7 +58,9 @@ export class TinderAPI implements ITinderAPI {
                 }
             }
 
-            const response = await this.sendRequest(url.toString(), options, rest.data ?? {});
+            const data = 'data' in rest ? rest.data : {};
+
+            const response = await this.sendRequest(url.toString(), options, data);
 
             return this.processResponse(response)
         } catch (error: any) {
@@ -131,7 +133,7 @@ export class TinderAPI implements ITinderAPI {
      * @returns {Promise<TinderResponse<TinderLikeResponse>>}
      */
     async like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>> {
-        const query = new URLSearchParams({ locale: params.locale ?? this.baseOptions?.defaultLocale })
+        const query = new URLSearchParams({ locale: params.locale ?? this.baseOptions?.defaultLocale! })
         const url = `${TINDER_ROUTER.like}/${params?.userId}` as Endpoint
         const body = {
             s_number: params?.s_number,
