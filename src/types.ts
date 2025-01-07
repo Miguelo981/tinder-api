@@ -1,7 +1,7 @@
 export type RequestMethod = 'GET' | 'POST';
 export type Endpoint = `/${string}`
 
-export type Locale = 'es-ES'
+export type Locale = 'es-ES' | 'en-US' | 'fr-FR' | 'pt-BR' | 'de-DE' | 'it-IT' | 'ja-JP' | 'ko-KR' | 'zh-CN' | 'zh-TW' | 'ru-RU' | 'pl-PL' | 'tr-TR'
 
 export type TinderResponse<T> = { data: T, response: Response }
 
