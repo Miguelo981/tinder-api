@@ -1,6 +1,6 @@
 {
-  "name": "@miguelo/producthunt-api",
-  "version": "0.3.0",
+  "name": "@miguelo/tinder-api",
+  "version": "0.1.0",
   "license": "MIT",
   "exports": "./index.ts",
   "tasks": {
