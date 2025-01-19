@@ -25,6 +25,7 @@ export type GetRquestParams = {
 
 export type PostRquestParams = {
     method: 'POST',
+    // @ts-ignore: Data could be anything
     data: any
     params?: URLSearchParams
     endpoint: Endpoint
