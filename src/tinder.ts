@@ -1,4 +1,4 @@
-import { DEFAULT_LOCALE, DEFAULT_SCOPES, TINDER_API_URL, TINDER_ROUTER } from "@/constants.ts";
+import { DEFAULT_CHAT_MESSAGES_COUNT, DEFAULT_LOCALE, DEFAULT_MATCHES_COUNT, DEFAULT_SCOPES, TINDER_API_URL, TINDER_ROUTER } from "@/constants.ts";
 import type { ConfigurationParameters, Endpoint, TinderResponse, RequestParams } from "@/types.ts";
 import type { ITinderAPI } from "@/interfaces/tinder.ts";
 import type { ConfigurationOptions } from "@/types.ts";
@@ -6,6 +6,8 @@ import type { TinderSearchParams, TinderSearchResponse } from "@/interfaces/sear
 import type { TinderLikeParams, TinderLikeResponse } from "@/interfaces/like.ts";
 import type { TinderDislikeParams, TinderDislikeResponse } from "@/interfaces/dislike.ts";
 import type { TinderProfileParams, TinderProfileResponse } from "./interfaces/profile.ts";
+import type { TinderMatchesParams, TinderMatchesResponse } from "@/interfaces/matches.ts";
+import type { TinderChatMessagesParams, TinderChatMessagesResponse, TinderSendMessageParams, TinderSendMessaResponse } from "./interfaces/chat.ts";
 
 export class TinderAPI implements ITinderAPI {
     private baseUrl: URL = TINDER_API_URL
@@ -98,7 +100,7 @@ export class TinderAPI implements ITinderAPI {
     }
 
     private async processResponse<T>(response: Response): Promise<TinderResponse<T>> {
-        let data
+        let data: any
         const contentType = response.headers.get('content-type') ?? '';
 
         if (contentType.includes('application/json')) {
@@ -173,8 +175,58 @@ export class TinderAPI implements ITinderAPI {
             locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
             include: (params?.scopes ?? DEFAULT_SCOPES).join(','),
         });
-        console.log(query.toString())
         const data = await this.get<TinderResponse<TinderProfileResponse>>(TINDER_ROUTER.profile, query);
+
+        return data
+    }
+
+    /**
+     * @summary Get authenticated matches
+     * @param {TinderMatchesParams} params 
+     * @returns {Promise<TinderResponse<TinderMatchesResponse>>}
+     */
+    async getMatches(params?: TinderMatchesParams): Promise<TinderResponse<TinderMatchesResponse>> {
+        const query = new URLSearchParams({
+            locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
+            count: String(params?.count ?? DEFAULT_MATCHES_COUNT),
+            message: String(params?.message ?? 1),
+            is_tinder_u: String(params?.isTinderU ?? false),
+        });
+        const data = await this.get<TinderResponse<TinderMatchesResponse>>(TINDER_ROUTER.matches, query);
+
+        return data
+    }
+
+    /**
+     * @summary Get match's chat messages
+     * @param {TinderChatMessagesParams} params 
+     * @returns {Promise<TinderResponse<TinderChatMessagesResponse>>}
+     */
+    async getChatMessages({ matchId, count = DEFAULT_CHAT_MESSAGES_COUNT, ...params }: TinderChatMessagesParams): Promise<TinderResponse<TinderChatMessagesResponse>> {
+        const query = new URLSearchParams({
+            locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
+            count: String(count),
+        });
+        const url = `${TINDER_ROUTER.chatMessages}/${matchId}/messages` as Endpoint
+        const data = await this.get<TinderResponse<TinderChatMessagesResponse>>(url, query);
+
+        return data
+    }
+
+    /**
+     * @summary Get authenticated matches
+     * @param {TinderSendMessageParams} params 
+     * @returns {Promise<TinderResponse<TinderSendMessaResponse>>}
+     */
+    async sendChatMessage(params: TinderSendMessageParams): Promise<TinderResponse<TinderSendMessaResponse>> {
+        const query = new URLSearchParams({
+            locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
+        });
+        const url = `${TINDER_ROUTER.sendMessage}/${params?.matchId}` as Endpoint
+        const body = {
+            message: params.message
+        }
+        const data = await this.post<TinderResponse<TinderSendMessaResponse>>(url, body, query);
 
         return data
     }
