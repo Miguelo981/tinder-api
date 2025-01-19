@@ -16,15 +16,15 @@
 Install the package via npm:
 
 ```bash
-npm install tinder-api
+npm install tinder-api-ts
 ```
 
 ```bash
-yarn add tinder-api
+yarn add tinder-api-ts
 ```
 
 ```bash
-pnpm i tinder-api
+pnpm i tinder-api-ts
 ```
 
 ### Deno
