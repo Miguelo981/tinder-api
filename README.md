@@ -1,13 +1,14 @@
 # tinder-api
 
-`tinder-api` is an unofficial library to interact with Tinder's API. Designed to work seamlessly with both Node.js and Deno, it simplifies the process of performing actions such as liking, disliking, and retrieving profiles, as well as accessing search results.
+`tinder-api` is an unofficial library to interact with Tinder's API. Designed to work seamlessly with both Node.js and Deno, it simplifies the process of performing actions such as liking, disliking, and retrieving profiles, as well as
+accessing search results.
 
 ## Features
 
-- Perform searches for profiles.
-- Like or dislike profiles.
-- Retrieve authenticated user profile information.
-- Designed for flexibility and easy integration.
+-   Perform searches for profiles.
+-   Like or dislike profiles.
+-   Retrieve authenticated user profile information.
+-   Designed for flexibility and easy integration.
 
 ## Installation
 
@@ -41,13 +42,13 @@ To use the `tinder-api`, you need to retrieve your `X-AUTH-TOKEN` from Tinder we
 
 ### Steps to Get Your Token:
 
-1. Open your browser and navigate to the Tinder website.  
-2. Open **Developer Tools** (usually by pressing `F12` or `Ctrl+Shift+I`).  
-3. Go to the **Application** tab.  
-4. Locate **IndexedDB** in the **Storage** section.  
-5. Find the `keyval-store` database and the `keyval` store.  
-6. Search for the key `persist::mfa`.  
-7. Extract the `authToken` value from the result. 
+1. Open your browser and navigate to the Tinder website.
+2. Open **Developer Tools** (usually by pressing `F12` or `Ctrl+Shift+I`).
+3. Go to the **Application** tab.
+4. Locate **IndexedDB** in the **Storage** section.
+5. Find the `keyval-store` database and the `keyval` store.
+6. Search for the key `persist::mfa`.
+7. Extract the `authToken` value from the result.
 
 Alternatively, use this script in your browser console to retrieve the token:
 
@@ -58,30 +59,30 @@ const key = 'persist::mfa';
 
 const dbPromise = indexedDB.open(dbName);
 
-dbPromise.onsuccess = function(event) {
-  const db = event.target.result;
-  
-  // Creamos una transacción de lectura
-  const transaction = db.transaction([storeName], 'readonly');
-  
-  // Obtenemos el objeto store
-  const objectStore = transaction.objectStore(storeName);
-  
-  // Realizamos la petición para obtener el valor
-  const request = objectStore.get(key);
-  
-  request.onsuccess = function(event) {
-    const result = JSON.parse(event.target.result);
-    console.log(result.authToken)
-  };
-  
-  request.onerror = function(event) {
-    console.error('Error al obtener el valor:', event.target.error);
-  };
+dbPromise.onsuccess = function (event) {
+    const db = event.target.result;
+
+    // Creamos una transacción de lectura (Create a read-only transaction)
+    const transaction = db.transaction([storeName], 'readonly');
+
+    // Obtenemos el objeto store (Get the store object)
+    const objectStore = transaction.objectStore(storeName);
+
+    // Realizamos la petición para obtener el valor (Make the request to get the value)
+    const request = objectStore.get(key);
+
+    request.onsuccess = function (event) {
+        const result = JSON.parse(event.target.result);
+        console.log(result.authToken);
+    };
+
+    request.onerror = function (event) {
+        console.error('Error al obtener el valor:', event.target.error);
+    };
 };
 
-dbPromise.onerror = function(event) {
-  console.error('Error al abrir la base de datos:', event.target.error);
+dbPromise.onerror = function (event) {
+    console.error('Error al abrir la base de datos:', event.target.error);
 };
 ```
 
@@ -90,16 +91,16 @@ dbPromise.onerror = function(event) {
 ### Init API client example
 
 ```typescript
-import { TinderAPI } from "tinder-api";
+import { TinderAPI } from 'tinder-api';
 
-const api = new TinderAPI({ xAuthToken: "your_auth_token" });
+const api = new TinderAPI({ xAuthToken: 'your_auth_token' });
 ```
 
 ### Search profiles and give like example
 
 ```typescript
-const results = await api.search()
-const profile = results.data.data.results[0]
+const results = await api.search();
+const profile = results.data.data.results[0];
 
 // Like a profile
 const likeResponse = await api.like({
@@ -112,12 +113,13 @@ const likeResponse = await api.like({
 
 ## API Methods
 
-| Method | Description |
-|--------|-------------|
-| `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>` | Search for profiles. |
-| `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>` | Like a profile. |
-| `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>` | Dislike a profile. |
-| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>` | Retrieve authenticated user profile. |
+| Method                                                                                       | Description                                                                                          |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --- |
+| `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`         | Search for profiles.                                                                                 |
+| `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`                | Like a profile.                                                                                      |
+| `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`       | Dislike a profile.                                                                                   |
+| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>`      | Retrieve authenticated user profile.                                                                 |     |
+| `setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>` | Sets the user's location using latitude and longitude. Note: Can only be used once every 10 minutes. |
 
 ## Interfaces
 
@@ -125,39 +127,48 @@ const likeResponse = await api.like({
 
 Parameters for searching profiles.
 
-| Property      | Type       | Description                            |
-|---------------|------------|----------------------------------------|
-| `locale`      | `string`   | The locale to use for the search.      |
+| Property | Type     | Description                       |
+| -------- | -------- | --------------------------------- |
+| `locale` | `string` | The locale to use for the search. |
 
 ### TinderLikeParams
 
 Parameters for liking a profile.
 
-| Property           | Type       | Description                            |
-|--------------------|------------|----------------------------------------|
-| `userId`           | `string`   | The ID of the profile to like.         |
-| `s_number`         | `string`   | The session number for the request.    |
-| `liked_content_id` | `string`   | The ID of the content to like.         |
-| `liked_content_type` | `string` | The type of content to like.           |
+| Property             | Type     | Description                         |
+| -------------------- | -------- | ----------------------------------- |
+| `userId`             | `string` | The ID of the profile to like.      |
+| `s_number`           | `string` | The session number for the request. |
+| `liked_content_id`   | `string` | The ID of the content to like.      |
+| `liked_content_type` | `string` | The type of content to like.        |
 
 ### TinderDislikeParams
 
 Parameters for disliking a profile.
 
-| Property   | Type       | Description                            |
-|------------|------------|----------------------------------------|
-| `userId`   | `string`   | The ID of the profile to dislike.      |
-| `s_number` | `string`   | The session number for the request.    |
+| Property   | Type     | Description                         |
+| ---------- | -------- | ----------------------------------- |
+| `userId`   | `string` | The ID of the profile to dislike.   |
+| `s_number` | `string` | The session number for the request. |
 
 ### TinderProfileParams
 
 Parameters for retrieving the authenticated user profile.
 
-| Property   | Type       | Description                            |
-|------------|------------|----------------------------------------|
-| `locale`   | `string`   | The locale to use for the profile.     |
-| `scopes`   | `string[]` | Additional data to include in the response. |
+| Property | Type       | Description                                 |
+| -------- | ---------- | ------------------------------------------- |
+| `locale` | `string`   | The locale to use for the profile.          |
+| `scopes` | `string[]` | Additional data to include in the response. |
 
+### TinderLocationParams
+
+Parameters for setting user location.
+
+| Property | Type     | Description                            |
+| -------- | -------- | -------------------------------------- |
+| `locale` | `string` | The locale to use for the request.     |
+| `lat`    | `number` | Latitude coordinate for the location.  |
+| `lon`    | `number` | Longitude coordinate for the location. |
 
 ## Error Handling
 
@@ -165,10 +176,10 @@ The library throws detailed errors if a request fails. Wrap your calls in `try-c
 
 ```typescript
 try {
-  const results = await api.search();
-  console.log(results);
+    const results = await api.search();
+    console.log(results);
 } catch (error) {
-  console.error("Error:", error.message);
+    console.error('Error:', error.message);
 }
 ```
 

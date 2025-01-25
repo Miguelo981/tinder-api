@@ -8,6 +8,7 @@ import type { TinderDislikeParams, TinderDislikeResponse } from "@/interfaces/di
 import type { TinderProfileParams, TinderProfileResponse } from "./interfaces/profile.ts";
 import type { TinderMatchesParams, TinderMatchesResponse } from "@/interfaces/matches.ts";
 import type { TinderChatMessagesParams, TinderChatMessagesResponse, TinderSendMessageParams, TinderSendMessaResponse } from "./interfaces/chat.ts";
+import type { TinderLocationParams, TinderLocationResponse } from "@/interfaces/location.ts";
 
 export class TinderAPI implements ITinderAPI {
     private baseUrl: URL = TINDER_API_URL
@@ -230,4 +231,35 @@ export class TinderAPI implements ITinderAPI {
 
         return data
     }
+
+    /**
+     * @summary Sets the user's location using a latitude and longitude.
+     *
+     * @remarks
+     * IMPORTANT: This request can only be made once every 10 minutes.
+     * Any requests during the 10-minute wait period will not change the location.
+     *
+     * Note: The "current location" section in your profile will not update to
+     * reflect the meta location, but matches will be served based on that meta location.
+     * @param {TinderLocationParams} params
+     * @returns {Promise<TinderResponse<TinderLocationResponse>>}
+     */
+    async setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>> {
+        const query = new URLSearchParams({
+            locale: params?.locale ?? this.baseOptions?.defaultLocale ??
+                DEFAULT_LOCALE,
+        });
+        const body = {
+            lat: params.lat,
+            lon: params.lon,
+        };
+        const data = await this.post<TinderResponse<TinderLocationResponse>>(
+            TINDER_ROUTER.location,
+            body,
+            query,
+        );
+
+        return data;
+    }
 }
+
