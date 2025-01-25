@@ -5,10 +5,10 @@ accessing search results.
 
 ## Features
 
-- Perform searches for profiles.
-- Like or dislike profiles.
-- Retrieve authenticated user profile information.
-- Designed for flexibility and easy integration.
+-   Perform searches for profiles.
+-   Like or dislike profiles.
+-   Retrieve authenticated user profile information.
+-   Designed for flexibility and easy integration.
 
 ## Installation
 
@@ -113,12 +113,13 @@ const likeResponse = await api.like({
 
 ## API Methods
 
-| Method                                                                                  | Description                          |
-| --------------------------------------------------------------------------------------- | ------------------------------------ |
-| `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`    | Search for profiles.                 |
-| `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`           | Like a profile.                      |
-| `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`  | Dislike a profile.                   |
-| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>` | Retrieve authenticated user profile. |
+| Method                                                                                       | Description                                                                                          |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --- |
+| `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`         | Search for profiles.                                                                                 |
+| `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`                | Like a profile.                                                                                      |
+| `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`       | Dislike a profile.                                                                                   |
+| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>`      | Retrieve authenticated user profile.                                                                 |     |
+| `setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>` | Sets the user's location using latitude and longitude. Note: Can only be used once every 10 minutes. |
 
 ## Interfaces
 
@@ -158,6 +159,16 @@ Parameters for retrieving the authenticated user profile.
 | -------- | ---------- | ------------------------------------------- |
 | `locale` | `string`   | The locale to use for the profile.          |
 | `scopes` | `string[]` | Additional data to include in the response. |
+
+### TinderLocationParams
+
+Parameters for setting user location.
+
+| Property | Type     | Description                            |
+| -------- | -------- | -------------------------------------- |
+| `locale` | `string` | The locale to use for the request.     |
+| `lat`    | `number` | Latitude coordinate for the location.  |
+| `lon`    | `number` | Longitude coordinate for the location. |
 
 ## Error Handling
 
