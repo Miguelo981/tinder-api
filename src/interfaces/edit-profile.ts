@@ -1,17 +1,13 @@
 import { Locale } from '@/types.ts';
 import type { Algo, AllInGender, Asset, Badge, City, CropInfo, Image, Job, Photo, School, User } from '@/interfaces/shared.ts';
 
-type EditableUserFields = Pick<
-    User,
-    | 'bio'
-    | 'gender'
-    | 'show_gender_on_profile'
-    | 'custom_gender'
+type EditableUserFields = Partial<
+    Pick<User, 'bio' | 'gender' | 'show_gender_on_profile' | 'custom_gender'>
 >;
 
 export interface TinderEditProfileParams {
     locale?: Locale;
-    user: EditableUserFields & {
+    user?: EditableUserFields & {
         distance_filter?: number;
         age_filter_min?: number;
         age_filter_max?: number;
