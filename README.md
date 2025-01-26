@@ -1,14 +1,14 @@
 # tinder-api
 
-`tinder-api` is an unofficial library to interact with Tinder's API. Designed to work seamlessly with both Node.js and Deno, it simplifies the process of performing actions such as liking, disliking, and retrieving profiles, as well as
-accessing search results.
+`tinder-api` is an unofficial library to interact with Tinder's API. Designed to work seamlessly with both Node.js and Deno, it simplifies
+the process of performing actions such as liking, disliking, and retrieving profiles, as well as accessing search results.
 
 ## Features
 
--   Perform searches for profiles.
--   Like or dislike profiles.
--   Retrieve authenticated user profile information.
--   Designed for flexibility and easy integration.
+- Perform searches for profiles.
+- Like or dislike profiles.
+- Retrieve authenticated user profile information.
+- Designed for flexibility and easy integration.
 
 ## Installation
 
@@ -113,13 +113,15 @@ const likeResponse = await api.like({
 
 ## API Methods
 
-| Method                                                                                       | Description                                                                                          |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --- |
-| `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`         | Search for profiles.                                                                                 |
-| `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`                | Like a profile.                                                                                      |
-| `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`       | Dislike a profile.                                                                                   |
-| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>`      | Retrieve authenticated user profile.                                                                 |     |
-| `setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>` | Sets the user's location using latitude and longitude. Note: Can only be used once every 10 minutes. |
+| Method                                                                                             | Description                                                                                          |
+| -------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`               | Search for profiles.                                                                                 |
+| `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`                      | Like a profile.                                                                                      |
+| `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`             | Dislike a profile.                                                                                   |
+| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>`            | Retrieve authenticated user profile.                                                                 |
+| `setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>`       | Sets the user's location using latitude and longitude. Note: Can only be used once every 10 minutes. |
+| `editProfile(params: TinderEditProfileParams): Promise<TinderResponse<TinderEditProfileResponse>>` | Edit the authenticated user's profile. Note: plus_control options require Tinder Plus.               |
+| `getUser(params: TinderUserParams): Promise<TinderResponse<TinderUserResponse>>`                   | Get a user's profile by username.                                                                    |
 
 ## Interfaces
 
@@ -170,6 +172,24 @@ Parameters for setting user location.
 | `lat`    | `number` | Latitude coordinate for the location.  |
 | `lon`    | `number` | Longitude coordinate for the location. |
 
+### TinderEditProfileParams
+
+Parameters for editing user profile.
+
+| Property       | Type     | Description                                                                                                  |
+| -------------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `user`         | `object` | User profile settings including distance_filter, age filters, bio, gender, etc. All properties are optional. |
+| `plus_control` | `object` | Optional Tinder Plus settings including hide_age, hide_distance, blend, hide_ads, and discoverable_party.    |
+
+### TinderUserParams
+
+Parameters for getting a user's profile.
+
+| Property   | Type     | Description                                  |
+| ---------- | -------- | -------------------------------------------- |
+| `username` | `string` | The username of the profile to retrieve.     |
+| `locale`   | `string` | Optional. The locale to use for the request. |
+
 ## Error Handling
 
 The library throws detailed errors if a request fails. Wrap your calls in `try-catch` to handle exceptions gracefully.
@@ -189,7 +209,8 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Contributing
 
-Contributions are welcome! If you encounter issues, have ideas for improvements, or want to contribute new features, feel free to open an issue or submit a pull request on the [GitHub repository](https://github.com/Miguelo981/tinder-api).
+Contributions are welcome! If you encounter issues, have ideas for improvements, or want to contribute new features, feel free to open an
+issue or submit a pull request on the [GitHub repository](https://github.com/Miguelo981/tinder-api).
 
 ### Guidelines:
 

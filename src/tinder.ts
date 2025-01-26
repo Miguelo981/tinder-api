@@ -1,49 +1,63 @@
-import { DEFAULT_CHAT_MESSAGES_COUNT, DEFAULT_LOCALE, DEFAULT_MATCHES_COUNT, DEFAULT_SCOPES, TINDER_API_URL, TINDER_ROUTER } from "@/constants.ts";
-import type { ConfigurationParameters, Endpoint, TinderResponse, RequestParams } from "@/types.ts";
-import type { ITinderAPI } from "@/interfaces/tinder.ts";
-import type { ConfigurationOptions } from "@/types.ts";
-import type { TinderSearchParams, TinderSearchResponse } from "@/interfaces/search.ts";
-import type { TinderLikeParams, TinderLikeResponse } from "@/interfaces/like.ts";
-import type { TinderDislikeParams, TinderDislikeResponse } from "@/interfaces/dislike.ts";
-import type { TinderProfileParams, TinderProfileResponse } from "./interfaces/profile.ts";
-import type { TinderMatchesParams, TinderMatchesResponse } from "@/interfaces/matches.ts";
-import type { TinderChatMessagesParams, TinderChatMessagesResponse, TinderSendMessageParams, TinderSendMessaResponse } from "./interfaces/chat.ts";
-import type { TinderLocationParams, TinderLocationResponse } from "@/interfaces/location.ts";
+import {
+    DEFAULT_CHAT_MESSAGES_COUNT,
+    DEFAULT_LOCALE,
+    DEFAULT_MATCHES_COUNT,
+    DEFAULT_SCOPES,
+    TINDER_API_URL,
+    TINDER_ROUTER,
+} from '@/constants.ts';
+import type { ConfigurationParameters, Endpoint, RequestParams, TinderResponse } from '@/types.ts';
+import type { ITinderAPI } from '@/interfaces/tinder.ts';
+import type { ConfigurationOptions } from '@/types.ts';
+import type { TinderSearchParams, TinderSearchResponse } from '@/interfaces/search.ts';
+import type { TinderLikeParams, TinderLikeResponse } from '@/interfaces/like.ts';
+import type { TinderDislikeParams, TinderDislikeResponse } from '@/interfaces/dislike.ts';
+import type { TinderProfileParams, TinderProfileResponse } from './interfaces/profile.ts';
+import type { TinderMatchesParams, TinderMatchesResponse } from '@/interfaces/matches.ts';
+import type {
+    TinderChatMessagesParams,
+    TinderChatMessagesResponse,
+    TinderSendMessageParams,
+    TinderSendMessaResponse,
+} from './interfaces/chat.ts';
+import type { TinderLocationParams, TinderLocationResponse } from '@/interfaces/location.ts';
+import type { TinderEditProfileParams, TinderEditProfileResponse } from '@/interfaces/edit-profile.ts';
+import type { TinderUserParams, TinderUserResponse } from '@/interfaces/user.ts';
 
 export class TinderAPI implements ITinderAPI {
-    private baseUrl: URL = TINDER_API_URL
+    private baseUrl: URL = TINDER_API_URL;
     /**
-   * parameter for grant type
-   *
-   * @type name security name
-   * @memberof TinderAPI
-   */
+     * parameter for grant type
+     *
+     * @type name security name
+     * @memberof TinderAPI
+     */
     private xAuthToken?:
         | string
         | Promise<string>
         | ((name: string) => string)
-        | ((name: string) => Promise<string>)
+        | ((name: string) => Promise<string>);
     /**
-   * base options for axios calls
-   *
-   * @type {ConfigurationOptions}
-   * @memberof TinderAPI
-   */
-    private baseOptions?: ConfigurationOptions
+     * base options for axios calls
+     *
+     * @type {ConfigurationOptions}
+     * @memberof TinderAPI
+     */
+    private baseOptions?: ConfigurationOptions;
 
     constructor(param: ConfigurationParameters = { xAuthToken: '' }) {
         this.xAuthToken = param.xAuthToken;
 
         if (!this.baseOptions) {
             this.baseOptions = {
-                defaultLocale: DEFAULT_LOCALE
-            }
+                defaultLocale: DEFAULT_LOCALE,
+            };
         }
 
         this.baseOptions.headers = {
             'X-AUTH-TOKEN': this.xAuthToken,
             ...this.baseOptions.headers,
-        }
+        };
     }
 
     private async request({ method, endpoint, ...rest }: RequestParams) {
@@ -53,7 +67,7 @@ export class TinderAPI implements ITinderAPI {
             const options: RequestInit = {
                 headers,
                 method,
-            }
+            };
 
             if ('params' in rest && rest.params?.size! > 0) {
                 for (const key of rest.params?.keys() ?? []) {
@@ -65,7 +79,7 @@ export class TinderAPI implements ITinderAPI {
 
             const response = await this.sendRequest(url.toString(), options, data);
 
-            return this.processResponse(response)
+            return this.processResponse(response);
         } catch (error: any) {
             throw new Error(`Failed to make request: ${error.message}`);
         }
@@ -97,78 +111,74 @@ export class TinderAPI implements ITinderAPI {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        return response
+        return response;
     }
 
     private async processResponse<T>(response: Response): Promise<TinderResponse<T>> {
-        let data: any
+        let data: any;
         const contentType = response.headers.get('content-type') ?? '';
 
         if (contentType.includes('application/json')) {
-            data = await response.json()
+            data = await response.json();
         } else {
-            data = await response.text()
+            data = await response.text();
         }
 
         return {
             data,
             response,
-        }
+        };
     }
 
     /**
-     *
      * @summary Get core search results
      * @param {TinderSearchParams} params
      * @returns {Promise<TinderResponse<TinderSearchResponse>>}
      */
     async search(params: TinderSearchParams = { locale: this.baseOptions?.defaultLocale }): Promise<TinderResponse<TinderSearchResponse>> {
-        const query = new URLSearchParams({ ...params })
+        const query = new URLSearchParams({ ...params });
         const data = await this.get<TinderResponse<TinderSearchResponse>>(TINDER_ROUTER.search, query);
 
-        return data
+        return data;
     }
 
     /**
-     * 
      * @summary Likes a profile
-     * @param {TinderLikeParams} params 
+     * @param {TinderLikeParams} params
      * @returns {Promise<TinderResponse<TinderLikeResponse>>}
      */
     async like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>> {
-        const query = new URLSearchParams({ locale: params.locale ?? this.baseOptions?.defaultLocale! })
-        const url = `${TINDER_ROUTER.like}/${params?.userId}` as Endpoint
+        const query = new URLSearchParams({ locale: params.locale ?? this.baseOptions?.defaultLocale! });
+        const url = `${TINDER_ROUTER.like}/${params?.userId}` as Endpoint;
         const body = {
             s_number: params?.s_number,
             liked_content_id: params?.liked_content_id,
             liked_content_type: params?.liked_content_type,
-        }
+        };
         const data = await this.post<TinderResponse<TinderLikeResponse>>(url, body, query);
 
-        return data
+        return data;
     }
 
     /**
-     * 
      * @summary Dislikes a profile
-     * @param {TinderDislikeParams} params 
+     * @param {TinderDislikeParams} params
      * @returns {Promise<TinderResponse<TinderDislikeResponse>>}
      */
     async dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>> {
         const query = new URLSearchParams({
             locale: params.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
-            s_number: String(params.s_number)
-        })
-        const url = `${TINDER_ROUTER.dislike}/${params.userId}` as Endpoint
+            s_number: String(params.s_number),
+        });
+        const url = `${TINDER_ROUTER.dislike}/${params.userId}` as Endpoint;
         const data = await this.get<TinderResponse<TinderDislikeResponse>>(url, query);
 
-        return data
+        return data;
     }
 
     /**
-     * 
      * @summary Get authenticated profile
-     * @param {TinderProfileParams} params 
+     * @param {TinderProfileParams} params
      * @returns {Promise<TinderResponse<TinderProfileResponse>>}
      */
     async profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>> {
@@ -178,12 +188,12 @@ export class TinderAPI implements ITinderAPI {
         });
         const data = await this.get<TinderResponse<TinderProfileResponse>>(TINDER_ROUTER.profile, query);
 
-        return data
+        return data;
     }
 
     /**
      * @summary Get authenticated matches
-     * @param {TinderMatchesParams} params 
+     * @param {TinderMatchesParams} params
      * @returns {Promise<TinderResponse<TinderMatchesResponse>>}
      */
     async getMatches(params?: TinderMatchesParams): Promise<TinderResponse<TinderMatchesResponse>> {
@@ -195,47 +205,49 @@ export class TinderAPI implements ITinderAPI {
         });
         const data = await this.get<TinderResponse<TinderMatchesResponse>>(TINDER_ROUTER.matches, query);
 
-        return data
+        return data;
     }
 
     /**
      * @summary Get match's chat messages
-     * @param {TinderChatMessagesParams} params 
+     * @param {TinderChatMessagesParams} params
      * @returns {Promise<TinderResponse<TinderChatMessagesResponse>>}
      */
-    async getChatMessages({ matchId, count = DEFAULT_CHAT_MESSAGES_COUNT, ...params }: TinderChatMessagesParams): Promise<TinderResponse<TinderChatMessagesResponse>> {
+    async getChatMessages(
+        { matchId, count = DEFAULT_CHAT_MESSAGES_COUNT, ...params }: TinderChatMessagesParams,
+    ): Promise<TinderResponse<TinderChatMessagesResponse>> {
         const query = new URLSearchParams({
             locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
             count: String(count),
         });
-        const url = `${TINDER_ROUTER.chatMessages}/${matchId}/messages` as Endpoint
+        const url = `${TINDER_ROUTER.chatMessages}/${matchId}/messages` as Endpoint;
         const data = await this.get<TinderResponse<TinderChatMessagesResponse>>(url, query);
 
-        return data
+        return data;
     }
 
     /**
      * @summary Get authenticated matches
-     * @param {TinderSendMessageParams} params 
+     * @param {TinderSendMessageParams} params
      * @returns {Promise<TinderResponse<TinderSendMessaResponse>>}
      */
     async sendChatMessage(params: TinderSendMessageParams): Promise<TinderResponse<TinderSendMessaResponse>> {
         const query = new URLSearchParams({
             locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
         });
-        const url = `${TINDER_ROUTER.sendMessage}/${params?.matchId}` as Endpoint
+        const url = `${TINDER_ROUTER.sendMessage}/${params?.matchId}` as Endpoint;
         const body = {
-            message: params.message
-        }
+            message: params.message,
+        };
         const data = await this.post<TinderResponse<TinderSendMessaResponse>>(url, body, query);
 
-        return data
+        return data;
     }
 
     /**
      * @summary Sets the user's location using a latitude and longitude.
      *
-     * @remarks
+     * @description
      * IMPORTANT: This request can only be made once every 10 minutes.
      * Any requests during the 10-minute wait period will not change the location.
      *
@@ -261,5 +273,38 @@ export class TinderAPI implements ITinderAPI {
 
         return data;
     }
-}
 
+    /**
+     * @summary Edit the authenticated user's profile
+     * @description plus_control will only work if you have Tinder Plus
+     * @param {TinderEditProfileParams} params
+     * @returns {Promise<TinderResponse<TinderEditProfileResponse>>}
+     */
+    async editProfile(params: TinderEditProfileParams): Promise<TinderResponse<TinderEditProfileResponse>> {
+        const query = new URLSearchParams({
+            locale: this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
+        });
+        const data = await this.post<TinderResponse<TinderEditProfileResponse>>(
+            TINDER_ROUTER.profile,
+            params,
+            query,
+        );
+
+        return data;
+    }
+
+    /**
+     * @summary Get user profile by username
+     * @param {TinderUserParams} params
+     * @returns {Promise<TinderResponse<TinderUserResponse>>}
+     */
+    async getUser(params: TinderUserParams): Promise<TinderResponse<TinderUserResponse>> {
+        const query = new URLSearchParams({
+            locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
+        });
+        const url = `${TINDER_ROUTER.user}/${params.username}` as Endpoint;
+        const data = await this.get<TinderResponse<TinderUserResponse>>(url, query);
+
+        return data;
+    }
+}
