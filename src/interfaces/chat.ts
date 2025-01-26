@@ -1,49 +1,49 @@
-import type { Locale, Meta } from "@/types.ts";
+import type { Locale, Meta } from '@/types.ts';
 
 export interface TinderSendMessageParams {
-    locale?: Locale
-    matchId: string
-    message: string
+    locale?: Locale;
+    matchId: string;
+    message: string;
 }
 
 export interface TinderSendMessaResponse {
-    _id:          string;
-    from:         string;
-    to:           string;
-    match_id:     string;
-    sent_date:    Date;
-    message:      string;
-    media:        Media;
+    _id: string;
+    from: string;
+    to: string;
+    match_id: string;
+    sent_date: Date;
+    message: string;
+    media: Media;
     created_date: Date;
 }
 
 export interface Media {
-    width:  null;
+    width: null;
     height: null;
 }
 
 export interface TinderChatMessagesParams {
-    locale?: Locale
-    count?: number
-    matchId: string
+    locale?: Locale;
+    count?: number;
+    matchId: string;
 }
 
 export interface TinderChatMessagesResponse {
     meta: Meta;
     data: {
-        messages: TinderMessage[]
-    }
+        messages: TinderMessage[];
+    };
 }
 
 export interface TinderMessage {
-    _id:          string;
-    match_id:     string;
-    sent_date:    Date;
-    message:      string;
-    to:           string;
-    from:         string;
+    _id: string;
+    match_id: string;
+    sent_date: Date;
+    message: string;
+    to: string;
+    from: string;
     created_date: Date;
-    timestamp:    number;
-    matchId:      string;
-    is_liked?:    boolean;
+    timestamp: number;
+    matchId: string;
+    is_liked?: boolean;
 }
