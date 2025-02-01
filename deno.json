@@ -5,7 +5,8 @@
   "exports": "./index.ts",
   "tasks": {
     "dev": "deno run --watch --allow-net test.ts",
-    "build": "deno run -A scripts/build-npm.ts 0.1.0"
+    "build": "deno run -A scripts/build-npm.ts 0.1.0",
+    "format": "deno fmt"
   },
   "imports": {
     "@/": "./src/",
