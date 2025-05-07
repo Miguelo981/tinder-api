@@ -118,8 +118,10 @@ const likeResponse = await api.like({
 | `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`         | Search for profiles.                                                                                 |
 | `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`                | Like a profile.                                                                                      |
 | `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`       | Dislike a profile.                                                                                   |
-| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>`      | Retrieve authenticated user profile.                                                                 |     |
+| `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>`      | Retrieve authenticated user profile.                                                                 |
 | `setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>` | Sets the user's location using latitude and longitude. Note: Can only be used once every 10 minutes. |
+| `getMatches(params?: TinderMatchesParams): Promise<TinderResponse<TinderMatchesResponse>>` | Retrieve matches for the authenticated user. |
+| `getChatMessages(params: TinderChatMessagesParams): Promise<TinderResponse<TinderChatMessagesResponse>>` | Retrieve chat messages for a specific match. |
 
 ## Interfaces
 
@@ -169,6 +171,22 @@ Parameters for setting user location.
 | `locale` | `string` | The locale to use for the request.     |
 | `lat`    | `number` | Latitude coordinate for the location.  |
 | `lon`    | `number` | Longitude coordinate for the location. |
+
+### TinderMatchesParams
+
+Parameters for retrieving matches.
+
+| Property  | Type     | Description                                    |
+| --------- | -------- | ---------------------------------------------- |
+| `message` | `number` | Number of messages to include in the response. |
+
+### TinderChatMessagesParams
+
+Parameters for retrieving chat messages.
+
+| Property  | Type     | Description                    |
+| --------- | -------- | ------------------------------ |
+| `matchId` | `string` | The ID of the match to query.  |
 
 ## Error Handling
 
