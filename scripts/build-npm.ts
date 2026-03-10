@@ -9,6 +9,7 @@ await build({
     deno: true,
   },
   importMap: 'deno.json',
+  test: false,
   package: {
     name: "tinder-api",
     version: Deno.args[0],
