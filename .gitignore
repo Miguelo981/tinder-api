@@ -2,3 +2,5 @@ deno.lock
 npm/
 index.mjs
 .vscode/
+
+.env
