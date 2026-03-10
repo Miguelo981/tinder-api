@@ -114,7 +114,7 @@ const likeResponse = await api.like({
 ## API Methods
 
 | Method                                                                                       | Description                                                                                          |
-| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --- |
+| -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`         | Search for profiles.                                                                                 |
 | `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`                | Like a profile.                                                                                      |
 | `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`       | Dislike a profile.                                                                                   |
