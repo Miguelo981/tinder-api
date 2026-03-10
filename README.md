@@ -36,9 +36,15 @@ Import the package directly from the repository URL:
 deno add jsr:@miguelo/tinder-api
 ```
 
-## Authentication Token
+## Authentication & Initial Configuration
 
-To use the `tinder-api`, you need to retrieve your `X-AUTH-TOKEN` from Tinder web. Here's how you can obtain it:
+To use the `tinder-api`, you need to retrieve your `X-AUTH-TOKEN` and your `persistent-device-id` from Tinder Web.
+
+The `persistent-device-id` value is obtained from the browser `localStorage` entry with the key `TinderWeb/uuid`.
+
+### Get your X-AUTH-TOKEN
+
+To use the `tinder-api`, you need to retrieve your `X-AUTH-TOKEN` from Tinder Web. Here's how you can obtain it:
 
 ### Steps to Get Your Token:
 
@@ -86,6 +92,17 @@ dbPromise.onerror = function (event) {
 };
 ```
 
+### Get your persistent-device-id
+
+To obtain the `persistent-device-id`, open the browser console on the Tinder Web page and run:
+
+```javascript
+const persistentDeviceId = window.localStorage.getItem('TinderWeb/uuid');
+console.log(persistentDeviceId);
+```
+
+You must send this value in the `persistent-device-id` header in every request made by the client.
+
 ## Usage
 
 ### Init API client example
@@ -93,7 +110,15 @@ dbPromise.onerror = function (event) {
 ```typescript
 import { TinderAPI } from 'tinder-api';
 
-const api = new TinderAPI({ xAuthToken: 'your_auth_token' });
+const api = new TinderAPI({
+    xAuthToken: 'your_auth_token',
+    baseOptions: {
+        defaultLocale: 'es-ES',
+        headers: {
+            'persistent-device-id': 'your_persistent_device_id', // value from localStorage 'TinderWeb/uuid'
+        },
+    },
+});
 ```
 
 ### Search profiles and give like example
