@@ -2,6 +2,7 @@ import type { Locale, RequestMethod, Meta } from "@/types.ts";
 
 export interface TinderSearchParams {
     locale?: Locale
+    duos?: 0 | 1
 }
 
 export interface TinderSearchResponse {
