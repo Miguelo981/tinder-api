@@ -60,9 +60,6 @@ export class TinderAPI implements ITinderAPI {
             }
 
             const data = 'data' in rest ? rest.data : {};
-
-            console.log(url.toString(), options, data)
-
             const response = await this.sendRequest(url.toString(), options, data);
 
             return this.processResponse(response)
