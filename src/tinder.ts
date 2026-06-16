@@ -4,6 +4,7 @@ import type { ITinderAPI } from "@/interfaces/tinder.ts";
 import type { ConfigurationOptions } from "@/types.ts";
 import type { TinderSearchParams, TinderSearchResponse } from "@/interfaces/search.ts";
 import type { TinderLikeParams, TinderLikeResponse } from "@/interfaces/like.ts";
+import type { TinderSuperLikeParams, TinderSuperLikeResponse } from "@/interfaces/superlike.ts";
 import type { TinderDislikeParams, TinderDislikeResponse } from "@/interfaces/dislike.ts";
 import type { TinderProfileParams, TinderProfileResponse } from "@/interfaces/profile.ts";
 import type { TinderMatchesParams, TinderMatchesResponse } from "@/interfaces/matches.ts";
@@ -146,7 +147,26 @@ export class TinderAPI implements ITinderAPI {
     }
 
     /**
-     * 
+     *
+     * @summary Super likes a profile
+     * @param {TinderSuperLikeParams} params
+     * @returns {Promise<TinderResponse<TinderSuperLikeResponse>>}
+     */
+    async superLike(params: TinderSuperLikeParams): Promise<TinderResponse<TinderSuperLikeResponse>> {
+        const query = new URLSearchParams({ locale: params.locale ?? this.baseOptions?.defaultLocale! })
+        const url = `${TINDER_ROUTER.like}/${params.userId}/super` as Endpoint
+        const body = {
+            s_number: params.s_number,
+            liked_content_id: params.liked_content_id,
+            liked_content_type: params.liked_content_type,
+        }
+        const data = await this.post<TinderResponse<TinderSuperLikeResponse>>(url, body, query);
+
+        return data
+    }
+
+    /**
+     *
      * @summary Dislikes a profile
      * @param {TinderDislikeParams} params 
      * @returns {Promise<TinderResponse<TinderDislikeResponse>>}
