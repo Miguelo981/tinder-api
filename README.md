@@ -6,8 +6,10 @@ accessing search results.
 ## Features
 
 -   Perform searches for profiles.
--   Like or dislike profiles.
+-   Like, dislike, or super-like profiles.
+-   Programmatic login via SMS + (optional) email verification — no need to extract the token manually.
 -   Retrieve authenticated user profile information.
+-   Retrieve matches and chat messages.
 -   Designed for flexibility and easy integration.
 
 ## Installation
@@ -103,6 +105,65 @@ console.log(persistentDeviceId);
 
 You must send this value in the `persistent-device-id` header in every request made by the client.
 
+## Programmatic Login
+
+As an alternative to extracting the `X-AUTH-TOKEN` manually, you can obtain it by logging in with your phone number. The library handles the protobuf flow, SMS OTP verification, and the optional email verification step (multi-factor) automatically.
+
+The `persistent-device-id` should be generated once and persisted between runs (use the same UUID for future logins to avoid being treated as a new device).
+
+### Quick login with callbacks
+
+```typescript
+import { LoginSession, TinderAPI } from 'tinder-api';
+
+const deviceId = '<your persistent device id>'; // persist this UUID between runs
+
+const session = new LoginSession({ persistentDeviceId: deviceId });
+
+const { apiToken } = await session.login({
+    phoneNumber: '34601381673',
+    getSmsCode: ({ otpLength }) => prompt(`SMS code (${otpLength} digits):`)!,
+    getEmailCode: ({ emailMasked, otpLength }) => {
+        console.log(`Code sent to ${emailMasked}`);
+        return prompt(`Email code (${otpLength} digits):`)!;
+    },
+});
+
+const api = new TinderAPI({
+    xAuthToken: apiToken,
+    baseOptions: {
+        defaultLocale: 'es-ES',
+        headers: { 'persistent-device-id': deviceId },
+    },
+});
+```
+
+The callbacks may be sync or async — `getSmsCode` and `getEmailCode` can pull the OTP from any source (a UI prompt, an SMS gateway webhook, IMAP polling, etc.). `getEmailCode` is optional: if Tinder requires email verification and no provider is supplied, a `TinderEmailRequiredError` is thrown instead.
+
+### Step-by-step login (manual control)
+
+If you prefer to drive each step explicitly:
+
+```typescript
+import { LoginSession, TinderEmailRequiredError, type LoginSuccessResponse } from 'tinder-api';
+
+const session = new LoginSession({ persistentDeviceId: deviceId });
+
+await session.requestSmsCode({ phoneNumber: '34601381673' });
+const smsCode = prompt('SMS code:')!;
+
+let auth: LoginSuccessResponse;
+try {
+    auth = await session.verifySmsCode({ phoneNumber: '34601381673', otpCode: smsCode });
+} catch (e) {
+    if (!(e instanceof TinderEmailRequiredError)) throw e;
+    const emailCode = prompt(`Email code (sent to ${e.challenge.emailMasked}):`)!;
+    auth = await session.verifyEmailCode({ emailCode, jwt: e.challenge.jwt });
+}
+
+console.log(auth.apiToken);
+```
+
 ## Usage
 
 ### Init API client example
@@ -136,17 +197,41 @@ const likeResponse = await api.like({
 });
 ```
 
+### Super-like a profile
+
+```typescript
+const superLikeResponse = await api.superLike({
+    s_number: profile.s_number,
+    userId: profile.user._id,
+    liked_content_id: profile.user.photos.at(0)?.id!,
+    liked_content_type: 'photo',
+});
+
+console.log(superLikeResponse.data.super_likes.remaining);
+```
+
 ## API Methods
 
 | Method                                                                                       | Description                                                                                          |
 | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `search(params?: TinderSearchParams): Promise<TinderResponse<TinderSearchResponse>>`         | Search for profiles.                                                                                 |
 | `like(params: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>`                | Like a profile.                                                                                      |
+| `superLike(params: TinderSuperLikeParams): Promise<TinderResponse<TinderSuperLikeResponse>>` | Super-like a profile.                                                                                |
 | `dislike(params: TinderDislikeParams): Promise<TinderResponse<TinderDislikeResponse>>`       | Dislike a profile.                                                                                   |
 | `profile(params?: TinderProfileParams): Promise<TinderResponse<TinderProfileResponse>>`      | Retrieve authenticated user profile.                                                                 |
 | `setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>` | Sets the user's location using latitude and longitude. Note: Can only be used once every 10 minutes. |
 | `getMatches(params?: TinderMatchesParams): Promise<TinderResponse<TinderMatchesResponse>>` | Retrieve matches for the authenticated user. |
 | `getChatMessages(params: TinderChatMessagesParams): Promise<TinderResponse<TinderChatMessagesResponse>>` | Retrieve chat messages for a specific match. |
+
+### `LoginSession`
+
+| Method                                                                                                                          | Description                                                                                          |
+| ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `new LoginSession(opts?: { persistentDeviceId?: string })`                                                                      | Create a login session. Auto-generates a `persistent-device-id` if not provided (persist it!).       |
+| `login(params): Promise<LoginSuccessResponse>`                                                                                   | Full orchestrated flow with `getSmsCode` / `getEmailCode` callbacks. Returns the `apiToken`.         |
+| `requestSmsCode(params: { phoneNumber, locale? }): Promise<SmsSentResponse>`                                                    | Triggers Tinder to send an SMS OTP to the phone number.                                              |
+| `verifySmsCode(params: { phoneNumber, otpCode, locale? }): Promise<LoginSuccessResponse>`                                       | Verifies the SMS OTP. May throw `TinderEmailRequiredError` if Tinder also requires email validation. |
+| `verifyEmailCode(params: { emailCode, jwt, locale? }): Promise<LoginSuccessResponse>`                                           | Verifies the email OTP (multi-factor). The `jwt` comes from `TinderEmailRequiredError.challenge`.    |
 
 ## Interfaces
 
@@ -168,6 +253,18 @@ Parameters for liking a profile.
 | `s_number`           | `string` | The session number for the request. |
 | `liked_content_id`   | `string` | The ID of the content to like.      |
 | `liked_content_type` | `string` | The type of content to like.        |
+
+### TinderSuperLikeParams
+
+Parameters for super-liking a profile.
+
+| Property             | Type     | Description                                |
+| -------------------- | -------- | ------------------------------------------ |
+| `userId`             | `string` | The ID of the profile to super-like.       |
+| `s_number`           | `number` | The session number for the request.        |
+| `liked_content_id`   | `string` | The ID of the content to super-like.       |
+| `liked_content_type` | `string` | The type of content to super-like.         |
+| `locale`             | `string` | Optional locale (defaults to client value).|
 
 ### TinderDislikeParams
 
@@ -212,6 +309,33 @@ Parameters for retrieving chat messages.
 | Property  | Type     | Description                    |
 | --------- | -------- | ------------------------------ |
 | `matchId` | `string` | The ID of the match to query.  |
+
+### Login types
+
+#### `SmsSentResponse`
+
+| Property         | Type     | Description                                        |
+| ---------------- | -------- | -------------------------------------------------- |
+| `phone`          | `string` | Phone number that received the SMS.                |
+| `otpLength`      | `number` | Expected number of digits of the SMS OTP (e.g. 6). |
+| `deliveryMethod` | `number` | Delivery method enum (1 = SMS).                    |
+
+#### `LoginSuccessResponse`
+
+| Property       | Type     | Description                                          |
+| -------------- | -------- | ---------------------------------------------------- |
+| `apiToken`     | `string` | The `X-AUTH-TOKEN` to pass to the `TinderAPI` client. |
+| `refreshToken` | `string` | JWT refresh token returned by Tinder.                |
+| `userId`       | `string` | Authenticated user's ObjectId.                       |
+| `createdAt`    | `number` | Timestamp (seconds) returned by the server.          |
+
+#### `EmailRequiredChallenge` (inside `TinderEmailRequiredError.challenge`)
+
+| Property      | Type     | Description                                                          |
+| ------------- | -------- | -------------------------------------------------------------------- |
+| `jwt`         | `string` | Challenge token — pass it back to `verifyEmailCode`.                 |
+| `emailMasked` | `string` | Masked email where the code was sent (e.g. `m******v@gmail.com`).    |
+| `otpLength`   | `number` | Expected number of digits of the email OTP.                          |
 
 ## Error Handling
 

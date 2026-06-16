@@ -4,3 +4,4 @@ export * from './like.ts';
 export * from './dislike.ts';
 export * from './profile.ts';
 export * from './location.ts';
+export * from './auth.ts';
