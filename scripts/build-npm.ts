@@ -8,13 +8,13 @@ await build({
   shims: {
     deno: true,
   },
-  importMap: 'deno.json',
+  importMap: "deno.json",
   test: false,
   package: {
     name: "tinder-api",
     version: Deno.args[0],
     description: "Unofficial Tinder API wrapper for Nodejs and Deno.",
-    keywords: ['api', 'nodejs', 'tinder', 'mrbeast', 'deno', 'tinder-api'],
+    keywords: ["api", "nodejs", "tinder", "mrbeast", "deno", "tinder-api"],
     license: "MIT",
     repository: {
       type: "git",
