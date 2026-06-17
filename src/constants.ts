@@ -6,10 +6,11 @@ export const API_V = '/v2';
 
 export const TINDER_API_URL = new URL(BASE_PATH);
 
-type TinderRoute = 'profile' | 'search' | 'like' | 'dislike' | 'matches' | 'chatMessages' | 'sendMessage' | 'location';
+type TinderRoute = 'profile' | 'profileUser' | 'search' | 'like' | 'dislike' | 'matches' | 'chatMessages' | 'sendMessage' | 'location';
 
 export const TINDER_ROUTER: Record<TinderRoute, Endpoint> = {
     profile: `${API_V}/profile`,
+    profileUser: `${API_V}/profile/user`,
     search: `${API_V}/recs/core`,
     like: '/like',
     dislike: '/pass',

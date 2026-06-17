@@ -95,13 +95,13 @@ export interface Child {
 
 export interface AvailableDescriptor {
     prompt?:      string;
-    descriptors:  Descriptor[];
+    descriptors:  AvailableDescriptorItem[];
     section_id:   string;
     section_name: string;
     display_type: string;
 }
 
-export interface Descriptor {
+export interface AvailableDescriptorItem {
     id:                            string;
     prompt?:                       string;
     type:                          DescriptorType;

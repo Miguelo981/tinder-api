@@ -10,6 +10,8 @@ import type { TinderProfileParams, TinderProfileResponse } from "@/interfaces/pr
 import type { TinderMatchesParams, TinderMatchesResponse } from "@/interfaces/matches.ts";
 import type { TinderChatMessagesParams, TinderChatMessagesResponse, TinderSendMessageParams, TinderSendMessaResponse } from "@/interfaces/chat.ts";
 import type { TinderLocationParams, TinderLocationResponse } from "@/interfaces/location.ts";
+import type { TinderUpdateProfileParams, TinderUpdateProfileResponse, TinderUpdateUserProfileParams, TinderUpdateUserProfileResponse, TinderUpdateProfilePreferencesParams } from "@/interfaces/update-profile.ts";
+import { hasProfileFields, hasUserProfileFields, toProfileBody, toUserProfileBody } from "@/adapters/update-profile.ts";
 
 export class TinderAPI implements ITinderAPI {
     private baseUrl: URL = TINDER_API_URL
@@ -277,6 +279,75 @@ export class TinderAPI implements ITinderAPI {
         );
 
         return data;
+    }
+
+    /**
+     * @summary Update profile / discovery settings (age & distance filters,
+     * auto-expansion, bio, gender filter, ...) via `POST /v2/profile`.
+     * @param {TinderUpdateProfileParams} params
+     * @returns {Promise<TinderResponse<TinderUpdateProfileResponse>>}
+     */
+    async updateProfile(params: TinderUpdateProfileParams): Promise<TinderResponse<TinderUpdateProfileResponse>> {
+        const query = new URLSearchParams({
+            locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
+        });
+        const body = toProfileBody(params);
+        const data = await this.post<TinderResponse<TinderUpdateProfileResponse>>(
+            TINDER_ROUTER.profile,
+            body,
+            query,
+        );
+
+        return data;
+    }
+
+    /**
+     * @summary Update recommendation preference filters (interests, descriptors,
+     * has-bio, number of photos) via `POST /v2/profile/user`.
+     * @param {TinderUpdateUserProfileParams} params
+     * @returns {Promise<TinderResponse<TinderUpdateUserProfileResponse>>}
+     */
+    async updateUserProfile(params: TinderUpdateUserProfileParams): Promise<TinderResponse<TinderUpdateUserProfileResponse>> {
+        const query = new URLSearchParams({
+            locale: params?.locale ?? this.baseOptions?.defaultLocale ?? DEFAULT_LOCALE,
+        });
+        const body = toUserProfileBody(params);
+        const data = await this.post<TinderResponse<TinderUpdateUserProfileResponse>>(
+            TINDER_ROUTER.profileUser,
+            body,
+            query,
+        );
+
+        return data;
+    }
+
+    /**
+     * @summary Update profile settings and preference filters in one call.
+     *
+     * @remarks
+     * Internally calls {@link TinderAPI.updateProfile} (`/v2/profile`) and
+     * {@link TinderAPI.updateUserProfile} (`/v2/profile/user`), but only hits an
+     * endpoint when the input actually contains fields for it.
+     * @param {TinderUpdateProfilePreferencesParams} params
+     * @returns {Promise<{ profile?: TinderResponse<TinderUpdateProfileResponse>; user?: TinderResponse<TinderUpdateUserProfileResponse> }>}
+     */
+    async updateProfilePreferences(params: TinderUpdateProfilePreferencesParams): Promise<{
+        profile?: TinderResponse<TinderUpdateProfileResponse>;
+        user?: TinderResponse<TinderUpdateUserProfileResponse>;
+    }> {
+        const result: {
+            profile?: TinderResponse<TinderUpdateProfileResponse>;
+            user?: TinderResponse<TinderUpdateUserProfileResponse>;
+        } = {};
+
+        if (hasProfileFields(params)) {
+            result.profile = await this.updateProfile(params);
+        }
+        if (hasUserProfileFields(params)) {
+            result.user = await this.updateUserProfile(params);
+        }
+
+        return result;
     }
 }
 
