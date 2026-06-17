@@ -11,7 +11,7 @@ await build({
   importMap: "deno.json",
   test: false,
   package: {
-    name: "tinder-api",
+    name: "tinder-api-ts",
     version: Deno.args[0],
     description: "Unofficial Tinder API wrapper for Nodejs and Deno.",
     keywords: ["api", "nodejs", "tinder", "deno", "tinder-api"],
