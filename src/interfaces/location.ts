@@ -1,4 +1,4 @@
-import { Locale } from "@/types.ts";
+import type { Locale } from "@/types.ts";
 
 export interface TinderLocationParams {
   locale?: Locale;
@@ -118,7 +118,7 @@ export interface TinderLocationResponse {
     levers: Record<
       string,
       {
-        value: any;
+        value: unknown;
         p_id: string;
       }
     >;

@@ -195,7 +195,10 @@ export class LoginSession {
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
-      body: body as BodyInit,
+      body: body.buffer.slice(
+        body.byteOffset,
+        body.byteOffset + body.byteLength,
+      ) as ArrayBuffer,
     });
     if (!response.ok) {
       const text = await response.text().catch(() => "");

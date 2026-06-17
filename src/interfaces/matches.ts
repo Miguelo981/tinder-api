@@ -80,7 +80,7 @@ export interface PhotoElement {
   rank?: number;
   score?: number;
   win_count?: number;
-  assets: any[];
+  assets: unknown[];
   type: MediaTypeEnum;
   media_type?: MediaTypeEnum;
   selfie_verified?: boolean;
@@ -142,7 +142,7 @@ export interface ByOpenerPhoto {
   rank: number;
   score: number;
   win_count: number;
-  assets: any[];
+  assets: unknown[];
   type: MediaTypeEnum;
 }
 

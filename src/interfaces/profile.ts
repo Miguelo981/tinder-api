@@ -56,7 +56,7 @@ export interface TinderProfileData {
   instagram: Instagram;
   likes: Likes;
   profile_meter: ProfileMeter;
-  notifications: any[];
+  notifications: unknown[];
   offerings: Offerings;
   onboarding: Onboarding;
   paywalls: Paywall[];
@@ -247,8 +247,7 @@ export interface Passport {
   unlimited: boolean;
 }
 
-export interface Instagram {
-}
+export type Instagram = Record<string, never>;
 
 export interface Likes {
   likes_remaining: number;

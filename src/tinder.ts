@@ -116,8 +116,9 @@ export class TinderAPI implements ITinderAPI {
       const response = await this.sendRequest(url.toString(), options, data);
 
       return this.processResponse(response);
-    } catch (error: any) {
-      throw new Error(`Failed to make request: ${error.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Failed to make request: ${message}`);
     }
   }
 
@@ -159,13 +160,13 @@ export class TinderAPI implements ITinderAPI {
   private async processResponse<T>(
     response: Response,
   ): Promise<TinderResponse<T>> {
-    let data: any;
+    let data: T;
     const contentType = response.headers.get("content-type") ?? "";
 
     if (contentType.includes("application/json")) {
-      data = await response.json();
+      data = await response.json() as T;
     } else {
-      data = await response.text();
+      data = await response.text() as T;
     }
 
     return {

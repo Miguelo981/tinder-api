@@ -30,7 +30,7 @@ export interface TinderProfile {
   tappy_content: TappyContent[];
   profile_detail_content: ProfileDetailContent[];
   ui_configuration: UIConfiguration;
-  user_posts: any[];
+  user_posts: unknown[];
   mutuals?: Mutuals;
 }
 
@@ -49,9 +49,9 @@ export interface SelectedInterest {
 }
 
 export interface Facebook {
-  common_connections: any[];
+  common_connections: unknown[];
   connection_count: number;
-  common_interests: any[];
+  common_interests: unknown[];
 }
 
 export interface LiveOps {
@@ -83,7 +83,7 @@ export interface Mutuals {
   mutuals_count: number;
   user_opt_in: boolean;
   rec_opt_in: boolean;
-  mutuals: any[];
+  mutuals: unknown[];
   mystery_mutuals: MysteryMutuals;
 }
 
@@ -92,7 +92,7 @@ export interface MysteryMutuals {
 }
 
 export interface ProfileDetailContent {
-  content: any[];
+  content: unknown[];
   page_content_id: string;
 }
 
@@ -140,7 +140,7 @@ export interface SpotifyTopArtist {
   name: string;
   top_track: Track;
   selected: boolean;
-  images: any[];
+  images: unknown[];
 }
 
 export interface TappyContent {
@@ -256,7 +256,7 @@ export interface Photo {
   crop_info: CropInfo;
   url: string;
   processedFiles: Image[];
-  processedVideos: any[];
+  processedVideos: unknown[];
   fileName?: string;
   extension: Extension;
   assets: Asset[];
