@@ -3,3 +3,5 @@ export { LoginSession, TinderCaptchaRequiredError, TinderEmailRequiredError, Tin
 export type { SmsCodeProvider, EmailCodeProvider } from './src/auth.ts'
 export * from '@/interfaces/index.ts'
 export * from '@/types.ts'
+export * from '@/dictionaries.ts'
+export * from '@/enums.ts'

@@ -6,6 +6,7 @@ import type { TinderProfileParams, TinderProfileResponse } from "@/interfaces/pr
 import type { TinderMatchesParams, TinderMatchesResponse } from "@/interfaces/matches.ts";
 import type { TinderLocationParams, TinderLocationResponse } from "@/interfaces/location.ts";
 import type { TinderSendMessageParams, TinderSendMessaResponse, TinderChatMessagesParams, TinderChatMessagesResponse } from "@/interfaces/chat.ts";
+import type { TinderUpdateProfileParams, TinderUpdateProfileResponse, TinderUpdateUserProfileParams, TinderUpdateUserProfileResponse, TinderUpdateProfilePreferencesParams } from "@/interfaces/update-profile.ts";
 import type { TinderResponse } from "@/types.ts";
 
 export interface ITinderAPI {
@@ -18,4 +19,10 @@ export interface ITinderAPI {
     getChatMessages(params?: TinderChatMessagesParams): Promise<TinderResponse<TinderChatMessagesResponse>>
     sendChatMessage(params?: TinderSendMessageParams): Promise<TinderResponse<TinderSendMessaResponse>>
     setLocation(params?: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>;
+    updateProfile(params: TinderUpdateProfileParams): Promise<TinderResponse<TinderUpdateProfileResponse>>;
+    updateUserProfile(params: TinderUpdateUserProfileParams): Promise<TinderResponse<TinderUpdateUserProfileResponse>>;
+    updateProfilePreferences(params: TinderUpdateProfilePreferencesParams): Promise<{
+        profile?: TinderResponse<TinderUpdateProfileResponse>;
+        user?: TinderResponse<TinderUpdateUserProfileResponse>;
+    }>;
 }
