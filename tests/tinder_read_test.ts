@@ -1,5 +1,4 @@
 import { TinderAPI } from "@/tinder.ts";
-import "@std/dotenv/load";
 import { assert, assertEquals, assertExists } from "@std/assert";
 
 function createClient() {
@@ -7,7 +6,7 @@ function createClient() {
   if (!authToken) {
     throw new Error(
       "Missing AUTH_TOKEN environment variable. " +
-      "Set it in your .env file and run tests with `--env-file=.env --allow-env --allow-net`.",
+        "Set it in your .env file and run tests with `--env-file=.env --allow-env --allow-net`.",
     );
   }
 
@@ -17,18 +16,33 @@ function createClient() {
   }
 
   return new TinderAPI({
-    xAuthToken: authToken, baseOptions: {
-      defaultLocale: 'es-ES',
+    xAuthToken: authToken,
+    baseOptions: {
+      defaultLocale: "es-ES",
       headers: {
-        'persistent-device-id': deviceId,
-      }
-    }
+        "persistent-device-id": deviceId,
+      },
+    },
   });
 }
 
-const api = createClient();
+// Integration tests hit the real Tinder API and require credentials (provide
+// them with `--env-file=.env --allow-env --allow-net`). When AUTH_TOKEN /
+// DEVICE_ID (or the env permission) are absent they are skipped, so a plain
+// `deno test` still runs the unit suite cleanly.
+const hasCreds = (() => {
+  try {
+    return Boolean(Deno.env.get("AUTH_TOKEN") && Deno.env.get("DEVICE_ID"));
+  } catch {
+    return false;
+  }
+})();
 
-Deno.test("profile returns authenticated user data", async () => {
+Deno.test({
+  name: "profile returns authenticated user data",
+  ignore: !hasCreds,
+}, async () => {
+  const api = createClient();
   const result = await api.profile();
 
   assertEquals(result.response.ok, true);
@@ -38,7 +52,8 @@ Deno.test("profile returns authenticated user data", async () => {
   assert(typeof result.data === "object");
 });
 
-Deno.test("search returns results", async () => {
+Deno.test({ name: "search returns results", ignore: !hasCreds }, async () => {
+  const api = createClient();
   const result = await api.search();
 
   assertEquals(result.response.ok, true);
@@ -47,7 +62,11 @@ Deno.test("search returns results", async () => {
   assert(typeof result.data === "object");
 });
 
-Deno.test("getMatches returns a list (may be empty)", async () => {
+Deno.test({
+  name: "getMatches returns a list (may be empty)",
+  ignore: !hasCreds,
+}, async () => {
+  const api = createClient();
   const result = await api.getMatches({ message: 1 });
 
   assertEquals(result.response.ok, true);
@@ -64,7 +83,11 @@ Deno.test("getMatches returns a list (may be empty)", async () => {
   }
 });
 
-Deno.test("getChatMessages returns messages for first match when available", async () => {
+Deno.test({
+  name: "getChatMessages returns messages for first match when available",
+  ignore: !hasCreds,
+}, async () => {
+  const api = createClient();
   const matchesResult = await api.getMatches({ message: 1 });
   const payload: unknown = matchesResult.data;
 
@@ -92,4 +115,3 @@ Deno.test("getChatMessages returns messages for first match when available", asy
   assertEquals(messagesResult.response.status, 200);
   assertExists(messagesResult.data);
 });
-
