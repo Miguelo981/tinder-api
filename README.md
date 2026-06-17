@@ -9,6 +9,7 @@ accessing search results.
 -   Like, dislike, or super-like profiles.
 -   Programmatic login via SMS + (optional) email verification — no need to extract the token manually.
 -   Retrieve authenticated user profile information.
+-   Update profile, discovery settings and recommendation preference filters (with typed enums for interests, descriptors and languages).
 -   Retrieve matches and chat messages.
 -   Designed for flexibility and easy integration.
 
@@ -210,6 +211,115 @@ const superLikeResponse = await api.superLike({
 console.log(superLikeResponse.data.super_likes.remaining);
 ```
 
+### Update profile & discovery preferences
+
+The profile is edited through two endpoints, exposed as `updateProfile`
+(`POST /v2/profile`) and `updateUserProfile` (`POST /v2/profile/user`).
+`updateProfilePreferences` is an orchestrator that takes a single camelCase
+input and calls both — only hitting the endpoint whose fields are present — and
+returns `{ profile?, user? }`. All fields are optional, so updates are partial.
+
+```typescript
+import {
+    TinderAPI,
+    UserInterest,
+    Descriptor,
+    LookingFor,
+} from 'tinder-api';
+
+await api.updateProfilePreferences({
+    // --- Profile / discovery (POST /v2/profile) ---
+    ageFilterMin: 18,
+    ageFilterMax: 45,
+    distanceFilterKm: 50, // converted to miles for you (see note below)
+    autoExpansion: { ageToggle: false, distanceToggle: false },
+    bio: 'Loquito ✅',
+    discoverable: true,
+    genderFilter: 1, // man = 0, woman = 1, everyone = -1
+    showGenderOnProfile: true,
+    globalMode: {
+        isEnabled: true,
+        languagePreferences: [
+            { language: 'es', isSelected: true },
+            { language: 'en', isSelected: true },
+        ],
+    },
+
+    // --- Recommendation filters (POST /v2/profile/user) — paid feature ---
+    userInterests: [UserInterest.ElectronicMusic, 'it_1'], // enum or raw `it_*`
+    descriptors: [
+        { id: Descriptor.LookingFor, selectedChoices: [LookingFor.ShortTermFun] },
+    ],
+    hasBio: true,
+    numberOfPhotos: 2,
+});
+```
+
+You can pass the **friendly enums** (`UserInterest`, `Descriptor`, the
+per-descriptor choice enums like `LookingFor`/`Zodiac`/`Education`, etc.) **or**
+the raw ids interchangeably — enum values are the ids. Invalid ids, or a choice
+that doesn't belong to the chosen descriptor, are compile-time errors.
+
+The methods can also be used individually:
+
+```typescript
+await api.updateProfile({ ageFilterMax: 40, distanceFilterKm: 30 });
+await api.updateUserProfile({ hasBio: true, userInterests: [UserInterest.Coffee] });
+```
+
+#### What you can update
+
+**Profile / discovery** (`updateProfile`, free): `ageFilterMin`, `ageFilterMax`,
+`distanceFilter`, `distanceFilterKm`, `autoExpansion`, `bio`, `discoverable`,
+`genderFilter`, `showGenderOnProfile`, `globalMode`.
+
+**Recommendation filters** (`updateUserProfile`): `userInterests`,
+`descriptors`, `hasBio`, `numberOfPhotos`.
+
+> ⚠️ **Paid feature.** The recommendation filters (`updateUserProfile` /
+> the filter fields of `updateProfilePreferences`) require an active Tinder
+> subscription (Gold/Platinum). If you call them without an eligible
+> subscription, Tinder rejects the request and the method **throws an
+> `HTTP error`** — wrap it in `try/catch`. The same applies to other premium
+> controls (e.g. Passport/global mode on some accounts). Profile/discovery
+> fields like age and distance are free.
+
+> 📏 **Distance is in miles.** `distance_filter` is stored by Tinder in **miles**
+> regardless of the locale shown in the app (the UI localizes to km). Pass
+> `distanceFilterKm` to use kilometers — it's converted (rounded) to miles. If
+> both `distanceFilter` and `distanceFilterKm` are given, `distanceFilter`
+> (miles) wins. Because miles are integers, some km values aren't exactly
+> representable (e.g. 30 km → 19 mi ≈ 31 km in-app).
+
+#### Global mode
+
+Global mode lets you see and match with people around the world and pick which
+languages you want to match with. It's set through `updateProfile` (or
+`updateProfilePreferences`) under `globalMode`:
+
+```typescript
+// Enable global mode
+await api.updateProfile({ globalMode: { isEnabled: true } });
+
+// Enable and set the display language
+await api.updateProfile({ globalMode: { isEnabled: true, displayLanguage: 'es-ES' } });
+
+// Choose the languages you want to match with
+await api.updateProfile({
+    globalMode: {
+        languagePreferences: [
+            { language: 'es', isSelected: true },
+            { language: 'en', isSelected: true },
+        ],
+    },
+});
+```
+
+`language` is typed as `GlobalModeLanguage` (ISO 639-1 two-letter codes, e.g.
+`'es'`, `'en'`, `'fr'`); the full set is also exported as the
+`GLOBAL_MODE_LANGUAGES` array. `displayLanguage` uses the full locale (e.g.
+`'es-ES'`). The API merges your selection with any languages already enabled.
+
 ## API Methods
 
 | Method                                                                                       | Description                                                                                          |
@@ -222,6 +332,9 @@ console.log(superLikeResponse.data.super_likes.remaining);
 | `setLocation(params: TinderLocationParams): Promise<TinderResponse<TinderLocationResponse>>` | Sets the user's location using latitude and longitude. Note: Can only be used once every 10 minutes. |
 | `getMatches(params?: TinderMatchesParams): Promise<TinderResponse<TinderMatchesResponse>>` | Retrieve matches for the authenticated user. |
 | `getChatMessages(params: TinderChatMessagesParams): Promise<TinderResponse<TinderChatMessagesResponse>>` | Retrieve chat messages for a specific match. |
+| `updateProfile(params: TinderUpdateProfileParams): Promise<TinderResponse<TinderUpdateProfileResponse>>` | Update profile / discovery settings (age & distance filters, auto-expansion, bio, gender filter, global mode). |
+| `updateUserProfile(params: TinderUpdateUserProfileParams): Promise<TinderResponse<TinderUpdateUserProfileResponse>>` | Update recommendation preference filters (interests, descriptors, has-bio, number of photos). **Requires a paid subscription.** |
+| `updateProfilePreferences(params: TinderUpdateProfilePreferencesParams): Promise<{ profile?, user? }>` | Update profile settings and preference filters in a single call (runs `updateProfile` and/or `updateUserProfile`). |
 
 ### `LoginSession`
 
@@ -309,6 +422,40 @@ Parameters for retrieving chat messages.
 | Property  | Type     | Description                    |
 | --------- | -------- | ------------------------------ |
 | `matchId` | `string` | The ID of the match to query.  |
+
+### TinderUpdateProfileParams
+
+Parameters for `updateProfile` (`POST /v2/profile`). All optional → partial updates.
+
+| Property              | Type                                                                                     | Description                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `ageFilterMin`        | `number`                                                                                 | Minimum age shown in recommendations.                                       |
+| `ageFilterMax`        | `number`                                                                                 | Maximum age shown in recommendations.                                       |
+| `distanceFilter`      | `number`                                                                                 | Max distance in **miles** (raw API value).                                  |
+| `distanceFilterKm`    | `number`                                                                                 | Max distance in **kilometers** (converted to miles; ignored if `distanceFilter` is set). |
+| `autoExpansion`       | `{ ageToggle?: boolean; distanceToggle?: boolean }`                                       | Auto-expand age/distance when running low on recs.                          |
+| `bio`                 | `string`                                                                                 | Profile bio text.                                                           |
+| `discoverable`        | `boolean`                                                                                | Whether the profile is shown in recommendations.                           |
+| `genderFilter`        | `-1 \| 0 \| 1`                                                                            | Gender to show (man = 0, woman = 1, everyone = -1).                         |
+| `showGenderOnProfile` | `boolean`                                                                                | Whether the gender is displayed on the profile.                            |
+| `globalMode`          | `{ isEnabled?: boolean; displayLanguage?: string; languagePreferences?: { language: GlobalModeLanguage; isSelected: boolean }[] }` | Global mode + match languages (ISO 639-1 codes). |
+| `locale`              | `string`                                                                                 | Optional locale (defaults to client value).                                |
+
+### TinderUpdateUserProfileParams
+
+Parameters for `updateUserProfile` (`POST /v2/profile/user`) — the recommendation
+preference filters. **Requires a paid Tinder subscription.** All optional.
+
+| Property         | Type                                                            | Description                                                       |
+| ---------------- | -------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `userInterests`  | `(UserInterest \| InterestId)[]`                               | Only show profiles sharing these interests (`it_*`).             |
+| `descriptors`    | `DescriptorFilterInput[]`                                      | Only show profiles matching these descriptor choices (`de_*`).   |
+| `hasBio`         | `boolean`                                                      | Only show profiles that have a bio.                              |
+| `numberOfPhotos` | `number`                                                      | Only show profiles with at least this many photos.              |
+| `locale`         | `string`                                                      | Optional locale (defaults to client value).                     |
+
+`TinderUpdateProfilePreferencesParams` is the intersection of both types above
+and is used by `updateProfilePreferences`.
 
 ### Login types
 
