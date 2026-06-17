@@ -14,7 +14,7 @@ await build({
     name: "tinder-api",
     version: Deno.args[0],
     description: "Unofficial Tinder API wrapper for Nodejs and Deno.",
-    keywords: ["api", "nodejs", "tinder", "mrbeast", "deno", "tinder-api"],
+    keywords: ["api", "nodejs", "tinder", "deno", "tinder-api"],
     license: "MIT",
     repository: {
       type: "git",
