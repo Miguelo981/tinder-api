@@ -7,6 +7,7 @@ import {
 } from "@std/assert";
 import { jsonResponse, makeClient, mockFetch } from "./test_helpers.ts";
 import { Descriptor, LookingFor, UserInterest } from "@/enums.ts";
+import { TinderPremiumRequiredError } from "@/auth.ts";
 
 Deno.test("search - GET /v2/recs/core with locale and duos", async () => {
   const mock = mockFetch(() => jsonResponse({ data: { results: [] } }));
@@ -298,6 +299,116 @@ Deno.test("response shape exposes parsed data and the raw Response", async () =>
     });
     assertEquals(res.response.ok, true);
     assertEquals(res.response.status, 200);
+  } finally {
+    mock.restore();
+  }
+});
+
+/** Responder for searchWithFilters tests: GET /v2/profile returns the snapshot,
+ * /v2/recs/core returns search results, preference POSTs echo an empty user. */
+function filterFlowResponder(
+  snapshotUser: Record<string, unknown>,
+  results: unknown[] = [],
+) {
+  return (url: string, init?: RequestInit): Response => {
+    const u = new URL(url);
+    const method = init?.method ?? "GET";
+    if (u.pathname === "/v2/profile" && method === "GET") {
+      return jsonResponse({ data: { user: snapshotUser } });
+    }
+    if (u.pathname === "/v2/recs/core") {
+      return jsonResponse({ data: { results } });
+    }
+    return jsonResponse({ data: { user: {} } });
+  };
+}
+
+Deno.test("searchWithFilters - snapshots, applies, searches, then restores", async () => {
+  const mock = mockFetch(
+    filterFlowResponder(
+      { age_filter_min: 18, age_filter_max: 30, distance_filter: 25 },
+      [{ s_number: 1 }],
+    ),
+  );
+  try {
+    const res = await makeClient().searchWithFilters({ ageFilterMax: 40 });
+    const seq = mock.calls.map((c) => `${c.method} ${new URL(c.url).pathname}`);
+    assertEquals(seq, [
+      "GET /v2/profile",
+      "POST /v2/profile",
+      "GET /v2/recs/core",
+      "POST /v2/profile",
+    ]);
+    // The apply step sent the requested filter.
+    assertEquals(mock.calls[1].body, { user: { age_filter_max: 40 } });
+    // The search result is returned to the caller.
+    assertEquals(res.data as unknown, { data: { results: [{ s_number: 1 }] } });
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("searchWithFilters - restore re-sends the captured initial preferences", async () => {
+  const mock = mockFetch(
+    filterFlowResponder({
+      age_filter_min: 18,
+      age_filter_max: 30,
+      distance_filter: 25,
+    }),
+  );
+  try {
+    await makeClient().searchWithFilters({ ageFilterMax: 55 });
+    const restoreCall = mock.calls[mock.calls.length - 1];
+    assertEquals(restoreCall.method, "POST");
+    assertEquals(new URL(restoreCall.url).pathname, "/v2/profile");
+    assertEquals(restoreCall.body, {
+      user: { age_filter_min: 18, age_filter_max: 30, distance_filter: 25 },
+    });
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("searchWithFilters - non-premium apply throws and skips search + restore", async () => {
+  const mock = mockFetch((url, init) => {
+    const u = new URL(url);
+    const method = init?.method ?? "GET";
+    if (u.pathname === "/v2/profile" && method === "GET") {
+      return jsonResponse({ data: { user: { age_filter_max: 30 } } });
+    }
+    return jsonResponse({ error: "premium required" }, 403);
+  });
+  try {
+    await assertRejects(
+      () => makeClient().searchWithFilters({ ageFilterMax: 40 }),
+      TinderPremiumRequiredError,
+    );
+    const seq = mock.calls.map((c) => `${c.method} ${new URL(c.url).pathname}`);
+    assertEquals(seq, ["GET /v2/profile", "POST /v2/profile"]);
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("updateProfile - 403 maps to TinderPremiumRequiredError", async () => {
+  const mock = mockFetch(() => jsonResponse({ error: "no" }, 403));
+  try {
+    await assertRejects(
+      () => makeClient().updateProfile({ ageFilterMax: 40 }),
+      TinderPremiumRequiredError,
+    );
+  } finally {
+    mock.restore();
+  }
+});
+
+Deno.test("updateUserProfile - 403 maps to TinderPremiumRequiredError", async () => {
+  const mock = mockFetch(() => jsonResponse({ error: "no" }, 403));
+  try {
+    await assertRejects(
+      () => makeClient().updateUserProfile({ hasBio: true }),
+      TinderPremiumRequiredError,
+    );
   } finally {
     mock.restore();
   }
