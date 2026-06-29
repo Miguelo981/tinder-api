@@ -3,7 +3,9 @@ export {
   LoginSession,
   TinderCaptchaRequiredError,
   TinderEmailRequiredError,
+  TinderHttpError,
   TinderLoginError,
+  TinderPremiumRequiredError,
 } from "./src/auth.ts";
 export type { EmailCodeProvider, SmsCodeProvider } from "./src/auth.ts";
 export * from "@/interfaces/index.ts";

@@ -1,11 +1,16 @@
 import { assert, assertEquals } from "@std/assert";
 import {
+  fromProfileUser,
   hasProfileFields,
   hasUserProfileFields,
   toProfileBody,
+  toRestoreParams,
   toUserProfileBody,
 } from "@/adapters/update-profile.ts";
-import type { TinderUpdateProfilePreferencesParams } from "@/interfaces/update-profile.ts";
+import type {
+  TinderUpdateProfilePreferencesParams,
+  UpdatedProfileUser,
+} from "@/interfaces/update-profile.ts";
 
 Deno.test("hasProfileFields - false when empty, true for any profile field", () => {
   assertEquals(hasProfileFields({}), false);
@@ -148,4 +153,73 @@ Deno.test("toUserProfileBody - maps filters and descriptor choices", () => {
       },
     },
   );
+});
+
+Deno.test("fromProfileUser - inverts present preference fields only", () => {
+  const user = {
+    _id: "u1",
+    age_filter_min: 21,
+    age_filter_max: 35,
+    distance_filter: 25,
+    gender_filter: 1,
+    preference_filters: {
+      preference_user_interests_filter: ["it_6056"],
+      preference_descriptors_filter: [
+        { id: "de_29", selected_choices: ["4"] },
+      ],
+      preference_has_bio_filter: true,
+      preference_number_of_photos_filter: 3,
+    },
+  } as unknown as UpdatedProfileUser;
+
+  assertEquals(fromProfileUser(user), {
+    ageFilterMin: 21,
+    ageFilterMax: 35,
+    distanceFilter: 25,
+    genderFilter: 1,
+    userInterests: ["it_6056"],
+    descriptors: [{ id: "de_29", selectedChoices: ["4"] }],
+    hasBio: true,
+    numberOfPhotos: 3,
+  });
+});
+
+Deno.test("fromProfileUser - omits fields absent on the user", () => {
+  const user = {
+    _id: "u1",
+    age_filter_max: 40,
+  } as unknown as UpdatedProfileUser;
+  assertEquals(fromProfileUser(user), { ageFilterMax: 40 });
+});
+
+Deno.test("toRestoreParams - re-sends the captured snapshot", () => {
+  const user = {
+    _id: "u1",
+    age_filter_min: 18,
+    age_filter_max: 30,
+    distance_filter: 25,
+  } as unknown as UpdatedProfileUser;
+  assertEquals(toRestoreParams(user, { ageFilterMax: 55 }), {
+    ageFilterMin: 18,
+    ageFilterMax: 30,
+    distanceFilter: 25,
+  });
+});
+
+Deno.test("toRestoreParams - clears filters the caller added that had no initial value", () => {
+  const user = {
+    _id: "u1",
+    age_filter_max: 30,
+  } as unknown as UpdatedProfileUser;
+  const applied: TinderUpdateProfilePreferencesParams = {
+    userInterests: ["it_6056"],
+    hasBio: true,
+    numberOfPhotos: 2,
+  };
+  assertEquals(toRestoreParams(user, applied), {
+    ageFilterMax: 30,
+    userInterests: [],
+    hasBio: false,
+    numberOfPhotos: 0,
+  });
 });

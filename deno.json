@@ -1,13 +1,13 @@
 {
   "name": "@miguelo/tinder-api",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "license": "MIT",
   "exports": "./index.ts",
   "tasks": {
     "dev": "deno run --watch --allow-net --allow-env --allow-read test.ts",
-    "build": "deno run -A scripts/build-npm.ts 0.4.1",
+    "build": "deno run -A scripts/build-npm.ts 0.4.2",
     "publish": "deno publish --allow-dirty",
-    "test": "deno test", 
+    "test": "deno test",
     "format": "deno fmt",
     "check": "deno lint && deno check index.ts"
   },

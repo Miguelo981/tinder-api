@@ -61,6 +61,36 @@ export class TinderLoginError extends Error {
   }
 }
 
+/**
+ * Thrown when a Tinder API request responds with a non-2xx status. Carries the
+ * HTTP `status` (and the raw `body` when available) so callers can branch on it.
+ */
+export class TinderHttpError extends Error {
+  constructor(
+    public readonly status: number,
+    public readonly body?: string,
+  ) {
+    super(`HTTP error! status: ${status}`);
+    this.name = "TinderHttpError";
+  }
+}
+
+/**
+ * Thrown when editing profile preferences is rejected by the API because the
+ * account lacks the required premium subscription.
+ */
+export class TinderPremiumRequiredError extends Error {
+  constructor(
+    message =
+      "Editing profile preferences requires a Tinder premium subscription.",
+    public readonly status?: number,
+    public readonly body?: string,
+  ) {
+    super(message);
+    this.name = "TinderPremiumRequiredError";
+  }
+}
+
 export class LoginSession {
   public readonly persistentDeviceId: string;
   private readonly appSessionId: string;

@@ -59,9 +59,14 @@ import type {
 import {
   hasProfileFields,
   hasUserProfileFields,
+  type ProfileBody,
   toProfileBody,
+  toRestoreParams,
   toUserProfileBody,
+  type UserProfileBody,
 } from "@/adapters/update-profile.ts";
+import { TinderHttpError, TinderPremiumRequiredError } from "@/auth.ts";
+import type { UpdatedProfileUser } from "@/interfaces/update-profile.ts";
 
 export class TinderAPI implements ITinderAPI {
   private baseUrl: URL = TINDER_API_URL;
@@ -117,6 +122,8 @@ export class TinderAPI implements ITinderAPI {
 
       return this.processResponse(response);
     } catch (error) {
+      // Preserve typed HTTP errors so callers can branch on the status code.
+      if (error instanceof TinderHttpError) throw error;
       const message = error instanceof Error ? error.message : String(error);
       throw new Error(`Failed to make request: ${message}`);
     }
@@ -151,7 +158,8 @@ export class TinderAPI implements ITinderAPI {
     const response = await fetch(url, options);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const body = await response.text().catch(() => undefined);
+      throw new TinderHttpError(response.status, body);
     }
 
     return response;
@@ -193,6 +201,66 @@ export class TinderAPI implements ITinderAPI {
     );
 
     return data;
+  }
+
+  /**
+   * @summary Search applying discovery filters as a self-contained transaction.
+   *
+   * @remarks
+   * The recs endpoint cannot be filtered directly, so this method:
+   *  1. reads the current profile to snapshot the preferences it will change,
+   *  2. applies `filters` via {@link TinderAPI.updateProfilePreferences} and
+   *     waits for them to be saved,
+   *  3. runs a normal {@link TinderAPI.search}, then
+   *  4. restores the original preferences (always, even if the search fails).
+   *
+   * Editing preferences is a premium feature: if the account is not premium the
+   * apply step throws {@link TinderPremiumRequiredError} and nothing is changed
+   * (so no restore is attempted). If the search succeeds but the restore fails,
+   * the restore error is surfaced so the caller knows preferences were left
+   * modified.
+   *
+   * @param {TinderUpdateProfilePreferencesParams} filters
+   * @param {TinderSearchParams} [searchParams]
+   * @returns {Promise<TinderResponse<TinderSearchResponse>>}
+   */
+  async searchWithFilters(
+    filters: TinderUpdateProfilePreferencesParams,
+    searchParams?: TinderSearchParams,
+  ): Promise<TinderResponse<TinderSearchResponse>> {
+    // 1. Snapshot the current preferences so we can restore them later.
+    const profileRes = await this.profile({
+      scopes: ["user"],
+      locale: filters.locale,
+    });
+    const user = profileRes.data.data.user as UpdatedProfileUser;
+    const restore = toRestoreParams(user, filters);
+
+    let applied = false;
+    let result: TinderResponse<TinderSearchResponse> | undefined;
+    let mainError: unknown;
+
+    try {
+      // 2. Apply the filters (throws TinderPremiumRequiredError if not premium).
+      await this.updateProfilePreferences(filters);
+      applied = true;
+      // 3. Run the normal search with the filters in effect.
+      result = await this.search(searchParams);
+    } catch (error) {
+      mainError = error;
+    }
+
+    // 4. Restore the original preferences, but only if we actually changed them.
+    if (applied) {
+      try {
+        await this.updateProfilePreferences(restore);
+      } catch (restoreError) {
+        if (mainError === undefined) throw restoreError;
+      }
+    }
+
+    if (mainError !== undefined) throw mainError;
+    return result!;
   }
 
   /**
@@ -407,13 +475,37 @@ export class TinderAPI implements ITinderAPI {
         DEFAULT_LOCALE,
     });
     const body = toProfileBody(params);
-    const data = await this.post<TinderResponse<TinderUpdateProfileResponse>>(
+    const data = await this.postPreferences<TinderUpdateProfileResponse>(
       TINDER_ROUTER.profile,
       body,
       query,
     );
 
     return data;
+  }
+
+  /**
+   * POST a preference-editing request, mapping a premium-gated rejection
+   * (HTTP 403) to {@link TinderPremiumRequiredError}. All other failures
+   * propagate unchanged.
+   */
+  private async postPreferences<T>(
+    endpoint: Endpoint,
+    body: ProfileBody | UserProfileBody,
+    query: URLSearchParams,
+  ): Promise<TinderResponse<T>> {
+    try {
+      return await this.post<TinderResponse<T>>(endpoint, body, query);
+    } catch (error) {
+      if (error instanceof TinderHttpError && error.status === 403) {
+        throw new TinderPremiumRequiredError(
+          undefined,
+          error.status,
+          error.body,
+        );
+      }
+      throw error;
+    }
   }
 
   /**
@@ -430,9 +522,7 @@ export class TinderAPI implements ITinderAPI {
         DEFAULT_LOCALE,
     });
     const body = toUserProfileBody(params);
-    const data = await this.post<
-      TinderResponse<TinderUpdateUserProfileResponse>
-    >(
+    const data = await this.postPreferences<TinderUpdateUserProfileResponse>(
       TINDER_ROUTER.profileUser,
       body,
       query,
