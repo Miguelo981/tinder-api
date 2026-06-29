@@ -45,6 +45,10 @@ export interface ITinderAPI {
   search(
     params?: TinderSearchParams,
   ): Promise<TinderResponse<TinderSearchResponse>>;
+  searchWithFilters(
+    filters: TinderUpdateProfilePreferencesParams,
+    searchParams?: TinderSearchParams,
+  ): Promise<TinderResponse<TinderSearchResponse>>;
   like(params?: TinderLikeParams): Promise<TinderResponse<TinderLikeResponse>>;
   superLike(
     params?: TinderSuperLikeParams,
